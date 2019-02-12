@@ -13,7 +13,7 @@
         }
     ],
     "autoload"   : {
-        "psr-4": { "Elplaza\\": "src/Elplaza" }
+        "psr-4": { "Elplaza\\": "src" }
     },
     "require": {
         "php"                      : ">=7.2",
@@ -21,7 +21,7 @@
         "squizlabs/php_codesniffer": "@stable",
         "phpmd/phpmd"              : "@stable",
         "friendsofphp/php-cs-fixer": "@stable",
-        "nategood/commando"        : "@stable"
+        "symfony/console"          : "@stable"
     },
     "require-dev": {
         "phpunit/phpunit" : "@stable"

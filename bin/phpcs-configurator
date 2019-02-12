@@ -10,6 +10,13 @@
 
 require_once __DIR__.'/../vendor/autoload.php';
 
-$configurator = new Elplaza\Configurator();
-$exitCode = $configurator->configure();
-exit($exitCode);
+use Elplaza\Command\StartCommand;
+use Symfony\Component\Console\Application;
+
+$application = new Application();
+
+$startCommand = new StartCommand();
+$application->add($startCommand);
+$application->setDefaultCommand($startCommand->getName());
+
+$application->run();
