@@ -25,5 +25,8 @@
     },
     "require-dev": {
         "phpunit/phpunit" : "@stable"
-    }
+    },
+    "bin": [
+        "bin/phpcs-configurator"
+    ]
 }

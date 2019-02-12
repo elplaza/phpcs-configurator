@@ -1,0 +1,15 @@
+#!/usr/bin/env php
+<?php
+/**
+ * PHP Coding Standard Configurator configure your custom coding standard.
+ *
+ * @author    Federico Piazzon <federico.piazzon@gmail.com>
+ * @copyright 2019-2020 Federico Piazzon
+ * @license   https://github.com/elplaza/phpcs-configurator/blob/master/licence.txt BSD Licence
+ */
+
+require_once __DIR__.'/../vendor/autoload.php';
+
+$configurator = new Elplaza\Configurator();
+$exitCode = $configurator->configure();
+exit($exitCode);
