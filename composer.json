@@ -1,0 +1,29 @@
+{
+    "name"       : "elplaza/phpcs-configurator",
+    "type"       : "library",
+    "description": "PHP Coding Standard Configurator",
+    "keywords"   : ["php", "psr"],
+    "license"    : "MIT",
+    "authors"    : [
+        {
+            "name"    : "Federico Piazzon",
+            "email"   : "federico.piazzon@gmail.com",
+            "homepage": "https://github.com/elplaza",
+            "role"    : "Developer"
+        }
+    ],
+    "autoload"   : {
+        "psr-4": { "Elplaza\\": "src/Elplaza" }
+    },
+    "require": {
+        "php"                      : ">=7.2",
+        "ext-xml"                  : "*",
+        "squizlabs/php_codesniffer": "@stable",
+        "phpmd/phpmd"              : "@stable",
+        "friendsofphp/php-cs-fixer": "@stable",
+        "nategood/commando"        : "@stable"
+    },
+    "require-dev": {
+        "phpunit/phpunit" : "@stable"
+    }
+}
