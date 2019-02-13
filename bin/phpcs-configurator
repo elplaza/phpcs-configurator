@@ -10,13 +10,15 @@
 
 require_once __DIR__.'/../vendor/autoload.php';
 
-use Elplaza\Command\StartCommand;
-use Symfony\Component\Console\Application;
+use Elplaza\Command\InitCommand;
 
-$application = new Application();
+define("PHPCSC_NAME", "PHP Coding Standard Configurator");
+define("PHPCSC_VERSION", "1.0.0");
 
-$startCommand = new StartCommand();
-$application->add($startCommand);
-$application->setDefaultCommand($startCommand->getName());
+$application = new \Elplaza\Application(PHPCSC_NAME, PHPCSC_VERSION);
+
+$initCommand = new InitCommand();
+$application->add($initCommand);
+$application->setDefaultCommand($initCommand->getName());
 
 $application->run();
