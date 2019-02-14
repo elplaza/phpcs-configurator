@@ -8,12 +8,20 @@
  * @license   https://github.com/elplaza/phpcs-configurator/blob/master/licence.txt BSD Licence
  */
 
-require_once __DIR__.'/../vendor/autoload.php';
+// composer autoload
+require_once __DIR__ . "/../vendor/autoload.php";
+
+// phpcs autoload
+require_once __DIR__ . "/../vendor/squizlabs/php_codesniffer/autoload.php";
 
 use Elplaza\Command\InitCommand;
 
 define("PHPCSC_NAME", "PHP Coding Standard Configurator");
 define("PHPCSC_VERSION", "1.0.0");
+define("PHPCSC_VERBOSITY", 0);
+
+define("PHP_CODESNIFFER_VERBOSITY", 0);
+define("PHP_CODESNIFFER_CBF", 0);
 
 $application = new \Elplaza\Application(PHPCSC_NAME, PHPCSC_VERSION);
 
