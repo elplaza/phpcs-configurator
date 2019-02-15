@@ -74,19 +74,39 @@ class InitCommand extends Command
 				)
 			);
 
+			$tmp = false;
 			foreach ($sniffs as $sniff) {
-				$generator = $sniff["generator"];
+				if ($tmp) {
+					die(var_dump($sniff));
+				}
+				$output->writeln(
+					array(
+						"",
+						"##############################################################",
+						""
+					)
+				);
 
-				$output->writeln($generator->generate());
+				if ($sniff["code"] == "Squiz.Arrays.ArrayDeclaration") {
+					$tmp = true;
+				}
 
-				$question = new ConfirmationQuestion("Do you want to enable this sniff? ", false);
+				if (!empty($sniff["doc"])) {
+					$generator = $sniff["generator"];
+					$output->writeln($generator->generate());				
+				}
+
+				$message = sprintf(
+					"Do you want to enable <info>%s</info> sniff? ",
+					$sniff["code"]
+				);
+
+				$question = new ConfirmationQuestion($message, false);
 
 				$sniff["choice"] = $helper->ask($input, $output, $question);
 			}
 
-		//	$xml = new SimpleXMLElement($xmlstr);
-
-//            $this->writeRuleset($input, $output, $choices);
+            $this->writeRuleset($sniffs, $fullpath);
 		} else {
 			$output->writeln("<error>✗</error> No sniffs can be found.");
 		}
@@ -101,9 +121,31 @@ class InitCommand extends Command
 
 	}
 
+	private function writeRuleset($sniffs, $fullpath)
+	{
+		$file = $fullpath . DIRECTORY_SEPARATOR . "ruleset.xml";
+
+		$parts = explode(DIRECTORY_SEPARATOR, $fullpath);
+		$name  = end($parts);
+
+		$dom = new \DOMDocument();
+		$dom->xmlVersion = "1.0";
+		$ruleset = $dom->createElement("ruleset");
+		$ruleset->setAttributeNode(new \DOMAttr("name", $name));
+
+		foreach ($sniffs as $sniff) {
+			$rule = $dom->createElement("rule");
+			$rule->setAttributeNode(new \DOMAttr("ref", $sniff["code"]));
+			$ruleset->appendChild($rule);
+		}
+
+		$dom->save($file);
+	}
+
 	private function getAllSniffs()
 	{
 		$sniffs    = array();
+//		$standards = Standards::getInstalledStandards();
 		$standards = Standards::getInstalledStandards(true);
 		foreach ($standards as $standard) {
 			$sniffs = array_merge($sniffs, $this->getStandardInfo($standard));
@@ -201,6 +243,8 @@ class InitCommand extends Command
 			$doc  = $this->getSniffDoc($path);
 
 			$generator->setDocFiles(array($doc));
+
+
 
 			$sniffs[] = array(
 				"standard"  => $standard,
