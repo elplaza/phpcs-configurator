@@ -80,11 +80,6 @@ class InitCommand extends Command
 
 			$sniffsChoiced = array();
 			foreach ($sniffs as $sniff) {
-				$pos = strpos($sniff["code"], "Zend");
-				if ($pos === false) {
-					continue;
-				}
-
 				$io->newLine();
 				$io->text("##############################################################");
 				$io->newLine();
@@ -189,10 +184,7 @@ class InitCommand extends Command
 		);
 
 		$docFile = str_replace("Sniff.php", "Standard.xml", $docFile);
-/*		$pos = strpos($sniffFile, "ClassDeclaration");
-		if ($pos !== false) {
-			die(var_dump($sniffFile, $docFile, is_file($docFile)));
-		}*/
+
 		return (is_file($docFile)) ? $docFile : null;
 	}
 
