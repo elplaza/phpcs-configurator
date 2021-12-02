@@ -19,7 +19,7 @@ class TextGenerator extends Text
 		$this->docFiles = $files;
 		return $this;
 	}
-
+/*
 	public function processSniff(\DOMNode $doc)
 	{
 		if (PHPCSC_VERBOSITY === 0) {
@@ -34,5 +34,5 @@ class TextGenerator extends Text
 			}
 		}
 	}
-
+*/
 }

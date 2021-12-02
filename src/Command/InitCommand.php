@@ -5,13 +5,14 @@ namespace Elplaza\Command;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\Console\Input\InputArgument;
-//use Symfony\Component\Console\Question\ChoiceQuestion;
 use Symfony\Component\Console\Question\Question;
 use Symfony\Component\Console\Question\ConfirmationQuestion;
 use PHP_CodeSniffer\Config;
 use PHP_CodeSniffer\Ruleset;
 use PHP_CodeSniffer\Util\Standards;
+use PHP_CodeSniffer\Util\Tokens;
 use PHP_CodeSniffer\Generators\Text;
 
 use Elplaza\TextGenerator;
@@ -20,7 +21,8 @@ class InitCommand extends Command
 {
 	protected static $defaultName = "init";
 
-	const PHPCS_DEFAULT_NAME = "MyPhpcs";
+	const STANDARD_DEFAULT_NAME = "MyPhpcs";
+	const STANDARD_DEFAULT_PATH = DIRECTORY_SEPARATOR . "app" . DIRECTORY_SEPARATOR . "rulesets";
 
 	protected function configure()
 	{
@@ -33,14 +35,15 @@ class InitCommand extends Command
 
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
-		$output->writeln("<info>Let's start to initialize your PHP Coding Standard!</info>");
+		$io = new SymfonyStyle($input, $output);
+
+		$io->info("Let's start to initialize your PHP Coding Standard!");
 
 		$helper = $this->getHelper("question");
 
 		// ask name of custom coding standard
 		$name = $helper->ask($input, $output, $this->questionName());
 
-		// ask path of custom coding standard
 		$path = $helper->ask($input, $output, $this->questionPath());
 
 		$fullpath = $path . DIRECTORY_SEPARATOR . $name;
@@ -53,72 +56,68 @@ class InitCommand extends Command
 			$question = new ConfirmationQuestion($message, false);
 
 			if (!$helper->ask($input, $output, $question)) {
-				$output->writeln(
-					"<comment>Your PHP Coding Standard has not been initialized.</comment>"
-				);
-				return;
+				$io->error("Your PHP Coding Standard has not been initialized.");
+				return self::FAILURE;
 			}
 
 			$this->rrmdir($fullpath);
 		}
 
-		mkdir($fullpath);
+		if (!mkdir($fullpath, 0777, true)) {
+			$io->error("Failed to create directory $fullpath.");
+			return self::FAILURE;			
+		}
 
 		// create the ruleset.xml
 		$sniffs = $this->getAllSniffs();
 		if (!empty($sniffs)) {
-			$output->writeln(
+			$io->info(
 				sprintf(
-					"There are <info>%s</info> sniffs availables",
+					"There are %s sniffs availables",
 					count($sniffs)
 				)
 			);
 
-			$tmp = false;
+			$sniffsChoiced = array();
 			foreach ($sniffs as $sniff) {
-				if ($tmp) {
-					die(var_dump($sniff));
+				$pos = strpos($sniff["code"], "Zend");
+				if ($pos === false) {
+					continue;
 				}
-				$output->writeln(
-					array(
-						"",
-						"##############################################################",
-						""
-					)
-				);
 
-				if ($sniff["code"] == "Squiz.Arrays.ArrayDeclaration") {
-					$tmp = true;
-				}
+				$io->newLine();
+				$io->text("##############################################################");
+				$io->newLine();
 
 				if (!empty($sniff["doc"])) {
-					$generator = $sniff["generator"];
-					$output->writeln($generator->generate());				
+					if (!empty($sniff["generator"])) {
+						$io->text($sniff["generator"]->generate());
+					}
 				}
 
 				$message = sprintf(
-					"Do you want to enable <info>%s</info> sniff? ",
+					"Do you want to enable <info>%s</info> sniff? (y/n) ",
 					$sniff["code"]
 				);
 
 				$question = new ConfirmationQuestion($message, false);
 
 				$sniff["choice"] = $helper->ask($input, $output, $question);
+				if ($sniff["choice"]) {
+					$sniffsChoiced[] = $sniff;
+				}
 			}
 
-            $this->writeRuleset($sniffs, $fullpath);
+            $this->writeRuleset($sniffsChoiced, $fullpath);
+			
+			$io->success("$name Coding Standard ruleset is successfully created in $fullpath");
+
+			return self::SUCCESS;
 		} else {
-			$output->writeln("<error>✗</error> No sniffs can be found.");
+			$io->error("No sniffs can be found.");
 		}
 
-//			$generator->generate();
-//		die(var_dump(count($sniffs)));
-
-		// add all coding standard needs
-
-		// create another command to create custom sniffs
-		// ask for custom sniff: if yes create directories and files
-
+		return self::FAILURE;
 	}
 
 	private function writeRuleset($sniffs, $fullpath)
@@ -129,6 +128,7 @@ class InitCommand extends Command
 		$name  = end($parts);
 
 		$dom = new \DOMDocument();
+		$dom->formatOutput = true;
 		$dom->xmlVersion = "1.0";
 		$ruleset = $dom->createElement("ruleset");
 		$ruleset->setAttributeNode(new \DOMAttr("name", $name));
@@ -138,6 +138,8 @@ class InitCommand extends Command
 			$rule->setAttributeNode(new \DOMAttr("ref", $sniff["code"]));
 			$ruleset->appendChild($rule);
 		}
+
+		$dom->appendChild($ruleset);
 
 		$dom->save($file);
 	}
@@ -158,6 +160,9 @@ class InitCommand extends Command
 	{
 		$config = new Config(array(), false);
 		$config->standards = array($standard);
+
+		$tokens = new Tokens();
+
 		$ruleset = new Ruleset($config);
 		$ruleset->name = $standard;
 
@@ -184,6 +189,10 @@ class InitCommand extends Command
 		);
 
 		$docFile = str_replace("Sniff.php", "Standard.xml", $docFile);
+/*		$pos = strpos($sniffFile, "ClassDeclaration");
+		if ($pos !== false) {
+			die(var_dump($sniffFile, $docFile, is_file($docFile)));
+		}*/
 		return (is_file($docFile)) ? $docFile : null;
 	}
 
@@ -196,7 +205,6 @@ class InitCommand extends Command
 
 	private function getStandardInfo($standard)
 	{
-		$generator = $this->getGenerator($standard);
 		$directory = $this->sniffDirPath($standard);
 
 		$sniffs = array();
@@ -242,17 +250,18 @@ class InitCommand extends Command
 			$code = $this->getSniffCode($path);
 			$doc  = $this->getSniffDoc($path);
 
-			$generator->setDocFiles(array($doc));
-
-
-
-			$sniffs[] = array(
+			$s = array(
 				"standard"  => $standard,
 				"code"      => $code,
 				"path"      => $path,
 				"doc"       => $doc,
-				"generator" => $generator
 			);
+
+			if (!empty($doc)) {
+				$s["generator"] = $this->getGenerator($standard)->setDocFiles(array($doc));
+			}
+
+			$sniffs[] = $s;
 		}
 
 		return $sniffs;
@@ -270,10 +279,10 @@ class InitCommand extends Command
 	{
 		$message = sprintf(
 			"Please enter the <info>NAME</info> of your php coding standard (default is %s): ",
-			self::PHPCS_DEFAULT_NAME
+			self::STANDARD_DEFAULT_NAME
 		);
 
-		$question = new Question($message, self::PHPCS_DEFAULT_NAME);
+		$question = new Question($message, self::STANDARD_DEFAULT_NAME);
 		$question->setNormalizer(
 			function ($value) {
 				return $value ? trim($value) : "";
@@ -285,9 +294,14 @@ class InitCommand extends Command
 
 	private function questionPath()
 	{
-		$question = new Question(
-			"Please enter the <info>ABSOLUTE PATH DESTINATION DIRECTORY</info>: "
+		$default = DIRECTORY_SEPARATOR . "app";
+
+		$message = sprintf(
+			"Please enter the <info>ABSOLUTE PATH DESTINATION DIRECTORY</info> (default is %s): ",
+			self::STANDARD_DEFAULT_PATH
 		);
+
+		$question = new Question($message, self::STANDARD_DEFAULT_PATH);
 		$question
 			->setNormalizer(
 				function ($value) {
@@ -297,14 +311,9 @@ class InitCommand extends Command
 			)
 			->setValidator(
 				function ($value) {
-					if (
-						empty($value)
-						|| !is_string($value)
-						|| !is_dir($value)
-						|| !is_writable($value)
-					) {
+					if (empty($value) || !is_string($value)) {
 						throw new \RuntimeException(
-							"Please enter an existing writable directory path"
+							"Please enter a directory path"
 						);
 					}
 

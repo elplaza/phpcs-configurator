@@ -16,15 +16,15 @@
         "psr-4": { "Elplaza\\": "src" }
     },
     "require": {
-        "php"                      : ">=7.2",
+        "php"                      : ">=8.1",
         "ext-xml"                  : "*",
-        "squizlabs/php_codesniffer": "@stable",
-        "phpmd/phpmd"              : "@stable",
-        "friendsofphp/php-cs-fixer": "@stable",
-        "symfony/console"          : "@stable"
+        "squizlabs/php_codesniffer": "*",
+        "phpmd/phpmd"              : "*",
+        "friendsofphp/php-cs-fixer": "*",
+        "symfony/console"          : "*"
     },
     "require-dev": {
-        "phpunit/phpunit" : "@stable"
+        "phpunit/phpunit" : "*"
     },
     "bin": [
         "bin/phpcs-configurator"

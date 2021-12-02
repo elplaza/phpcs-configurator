@@ -8,6 +8,10 @@
  * @license   https://github.com/elplaza/phpcs-configurator/blob/master/licence.txt BSD Licence
  */
 
+if(defined('E_DEPRECATED')) {
+    error_reporting(error_reporting() & ~E_DEPRECATED);
+}
+
 // composer autoload
 require_once __DIR__ . "/../vendor/autoload.php";
 

@@ -1,5 +1,7 @@
 #ignore directories
 vendor/
+rulesets/
 
 #ignore files
 composer.lock
+
